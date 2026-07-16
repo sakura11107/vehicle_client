@@ -1,28 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
-import * as vehicleApi from '../api/vehicle'
-import type { Vehicle, VehicleQuery } from '../types/vehicle'
+import * as userApi from '../api/user-manage'
+import type { User, UserQuery } from '../types/user-manage'
 
-export const useVehicleStore = defineStore('vehicle', () => {
-  const vehicleList = ref<Vehicle[]>([])
+export const useUserManageStore = defineStore('userManage', () => {
+  const userList = ref<User[]>([])
   const total = ref(0)
   const loading = ref(false)
 
-  const query = reactive<VehicleQuery>({
+  const query = reactive<UserQuery>({
     page: 1,
     size: 10,
-    plateNumber: '',
-    brand: '',
-    model: '',
-    color: '',
+    username: '',
     status: null,
   })
 
   async function fetchList() {
     loading.value = true
     try {
-      const res = await vehicleApi.getVehicleList(query)
-      vehicleList.value = res.data.records
+      const res = await userApi.getUserList(query)
+      userList.value = res.data.records
       total.value = res.data.total
     } finally {
       loading.value = false
@@ -30,31 +27,28 @@ export const useVehicleStore = defineStore('vehicle', () => {
   }
 
   async function getById(id: number) {
-    const res = await vehicleApi.getVehicleById(id)
+    const res = await userApi.getUserById(id)
     return res.data
   }
 
-  async function create(data: Vehicle) {
-    const res = await vehicleApi.createVehicle(data)
+  async function create(data: User) {
+    const res = await userApi.createUser(data)
     return res.data
   }
 
-  async function update(id: number, data: Vehicle) {
-    const res = await vehicleApi.updateVehicle(id, data)
+  async function update(id: number, data: User) {
+    const res = await userApi.updateUser(id, data)
     return res.data
   }
 
   async function remove(id: number) {
-    await vehicleApi.deleteVehicle(id)
+    await userApi.deleteUser(id)
   }
 
   function resetQuery() {
     query.page = 1
     query.size = 10
-    query.plateNumber = ''
-    query.brand = ''
-    query.model = ''
-    query.color = ''
+    query.username = ''
     query.status = null
   }
 
@@ -70,7 +64,7 @@ export const useVehicleStore = defineStore('vehicle', () => {
   }
 
   return {
-    vehicleList,
+    userList,
     total,
     loading,
     query,

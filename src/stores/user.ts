@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import request from '../utils/request'
-import type { UserInfo, ApiResponse } from '../types/user'
+import * as authApi from '../api/auth'
+import type { UserInfo } from '../types/user'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || '')
@@ -25,18 +25,14 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function login(params: { username: string; password: string }) {
-    const res: ApiResponse<{ token: string; user: UserInfo }> = await request.post('/auth/login', params)
+    const res = await authApi.login(params)
     setToken(res.data.token)
     userInfo.value = res.data.user
     return res
   }
 
-  async function register(params: {
-    username: string
-    email: string
-    password: string
-  }) {
-    const res = await request.post('/auth/register', params)
+  async function register(params: { username: string; email: string; password: string }) {
+    const res = await authApi.register(params)
     return res
   }
 
