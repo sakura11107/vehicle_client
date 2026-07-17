@@ -7,6 +7,11 @@ export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || '')
   const userInfo = ref<UserInfo | null>(null)
 
+  try {
+    const saved = localStorage.getItem('userInfo')
+    if (saved) userInfo.value = JSON.parse(saved)
+  } catch {}
+
   const isLoggedIn = computed(() => !!token.value)
 
   const roleText = computed(() => {
@@ -28,6 +33,7 @@ export const useUserStore = defineStore('user', () => {
     const res = await authApi.login(params)
     setToken(res.data.token)
     userInfo.value = res.data.user
+    localStorage.setItem('userInfo', JSON.stringify(res.data.user))
     return res
   }
 
@@ -39,6 +45,7 @@ export const useUserStore = defineStore('user', () => {
   function logout() {
     clearToken()
     userInfo.value = null
+    localStorage.removeItem('userInfo')
   }
 
   return { token, userInfo, isLoggedIn, roleText, setToken, clearToken, login, register, logout }

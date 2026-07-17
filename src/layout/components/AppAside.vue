@@ -6,6 +6,7 @@ import {
   Setting,
   User,
   Platform,
+  Calendar,
 } from '@element-plus/icons-vue'
 
 defineProps<{
@@ -45,6 +46,10 @@ function handleMenuSelect(index: string) {
     <el-menu-item index="/user">
       <el-icon><User /></el-icon>
       <template #title>{{ t('aside.user') }}</template>
+    </el-menu-item>
+    <el-menu-item index="/reservation">
+      <el-icon><Calendar /></el-icon>
+      <template #title>{{ t('aside.reservation') }}</template>
     </el-menu-item>
     <el-menu-item index="/settings">
       <el-icon><Setting /></el-icon>

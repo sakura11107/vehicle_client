@@ -25,11 +25,11 @@ const statusOptions = computed(() => {
   ]
 })
 
-const roleOptions = [
+const roleOptions = computed(() => [
   { label: t('userManage.roleMap.0'), value: 0 },
   { label: t('userManage.roleMap.1'), value: 1 },
   { label: t('userManage.roleMap.2'), value: 2 },
-]
+])
 
 function getStatusType(status: number) {
   return status === 1 ? 'success' : 'danger'
