@@ -37,6 +37,11 @@ const routes: RouteRecordRaw[] = [
         name: 'Reservation',
         component: () => import('../views/reservation/index.vue'),
       },
+      {
+        path: 'message',
+        name: 'Message',
+        component: () => import('../views/message/index.vue'),
+      },
     ],
   },
 ]

@@ -1,13 +1,41 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useUserStore } from '../stores/user'
+import { useMessageStore } from '../stores/message'
 import AppHeader from './components/AppHeader.vue'
 import AppAside from './components/AppAside.vue'
 
 const isCollapse = ref(false)
+const userStore = useUserStore()
+const messageStore = useMessageStore()
 
 function toggleCollapse() {
   isCollapse.value = !isCollapse.value
 }
+
+function initMessage() {
+  if (userStore.isLoggedIn && userStore.token) {
+    messageStore.connectWs(userStore.token)
+    messageStore.fetchConversations()
+    messageStore.fetchUnreadCount()
+  }
+}
+
+watch(() => userStore.isLoggedIn, (loggedIn) => {
+  if (loggedIn) {
+    initMessage()
+  } else {
+    messageStore.disconnectWs()
+  }
+})
+
+onMounted(() => {
+  initMessage()
+})
+
+onUnmounted(() => {
+  messageStore.disconnectWs()
+})
 </script>
 
 <template>
