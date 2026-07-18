@@ -11,6 +11,7 @@ const messageStore = useMessageStore()
 
 const inputMessage = ref('')
 const chatBodyRef = ref<HTMLDivElement>()
+const loadingOlder = ref(false)
 
 const myUserId = computed(() => userStore.userInfo?.id ?? 0)
 
@@ -57,6 +58,22 @@ function scrollToBottom() {
   }
 }
 
+async function handleChatScroll() {
+  const el = chatBodyRef.value
+  if (!el || el.scrollTop > 50) return
+  if (messageStore.chatLoading) return
+  if (!messageStore.currentChatUserId) return
+  if (messageStore.chatMessages.length >= messageStore.chatTotal) return
+
+  loadingOlder.value = true
+  const prevHeight = el.scrollHeight
+  await messageStore.loadMoreHistory(messageStore.currentChatUserId)
+  nextTick(() => {
+    el.scrollTop = el.scrollHeight - prevHeight
+    loadingOlder.value = false
+  })
+}
+
 async function handleSend() {
   const content = inputMessage.value.trim()
   if (!content || !messageStore.currentChatUserId) return
@@ -77,6 +94,7 @@ function handleMarkAllRead() {
 }
 
 watch(() => messageStore.chatMessages.length, () => {
+  if (loadingOlder.value) return
   nextTick(scrollToBottom)
 })
 </script>
@@ -124,7 +142,10 @@ watch(() => messageStore.chatMessages.length, () => {
           <div class="chat-header">
             <span>{{ currentUserName }}</span>
           </div>
-          <div ref="chatBodyRef" class="chat-body">
+          <div ref="chatBodyRef" class="chat-body" @scroll="handleChatScroll">
+            <div v-if="loadingOlder" class="chat-loading-older">
+              <el-icon class="is-loading"><ChatDotRound /></el-icon>
+            </div>
             <div v-if="messageStore.chatLoading && messageStore.chatMessages.length === 0" class="chat-loading">
               <el-icon class="is-loading"><ChatDotRound /></el-icon>
             </div>
@@ -296,6 +317,13 @@ watch(() => messageStore.chatMessages.length, () => {
   align-items: center;
   justify-content: center;
   flex: 1;
+}
+.chat-loading-older {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+  color: #9ca3af;
+  font-size: 18px;
 }
 .chat-bubble {
   max-width: 65%;

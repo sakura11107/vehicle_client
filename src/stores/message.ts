@@ -58,13 +58,18 @@ export const useMessageStore = defineStore('message', () => {
     chatLoading.value = true
     try {
       const res = await messageApi.getChatHistory(userId, chatPage.value)
-      const records = res.data.records
+      const records = [...res.data.records].reverse()
       if (append) {
         chatMessages.value = [...records, ...chatMessages.value]
       } else {
         chatMessages.value = records
       }
       chatTotal.value = res.data.total
+    } catch (error) {
+      if (!append) {
+        chatMessages.value = []
+      }
+      throw error
     } finally {
       chatLoading.value = false
     }
@@ -96,10 +101,11 @@ export const useMessageStore = defineStore('message', () => {
   }
 
   async function markAsRead(userId: number) {
-    await messageApi.markAsRead(userId)
     const conv = conversations.value.find((c) => c.userId === userId)
+    const countToDecrement = conv ? conv.unreadCount : 0
+    await messageApi.markAsRead(userId)
     if (conv) {
-      unreadCount.value -= conv.unreadCount
+      unreadCount.value -= countToDecrement
       conv.unreadCount = 0
     }
   }
@@ -110,10 +116,14 @@ export const useMessageStore = defineStore('message', () => {
     conversations.value.forEach((c) => (c.unreadCount = 0))
   }
 
-  function openChat(userId: number) {
+  async function openChat(userId: number) {
     currentChatUserId.value = userId
-    fetchChatHistory(userId)
-    markAsRead(userId)
+    try {
+      await fetchChatHistory(userId)
+      await markAsRead(userId)
+    } catch (error) {
+      console.error('Failed to open chat:', error)
+    }
   }
 
   function closeChat() {
