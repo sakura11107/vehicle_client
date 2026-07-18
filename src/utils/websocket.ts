@@ -11,7 +11,7 @@ export function connectWebSocket(token: string, onMessage: (msg: MessageResponse
   onMessageCallback = onMessage
 
   stompClient = new Client({
-    webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+    webSocketFactory: () => new SockJS('/ws'),
     connectHeaders: { Authorization: `Bearer ${token}` },
     reconnectDelay: 5000,
     heartbeatIncoming: 4000,

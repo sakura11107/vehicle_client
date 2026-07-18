@@ -18,7 +18,11 @@ export const useVehicleStore = defineStore('vehicle', () => {
     status: null,
   })
 
-  async function fetchList() {
+  async function fetchList(params?: { page?: number; size?: number }) {
+    if (params) {
+      if (params.page !== undefined) query.page = params.page
+      if (params.size !== undefined) query.size = params.size
+    }
     loading.value = true
     try {
       const res = await vehicleApi.getVehicleList(query)

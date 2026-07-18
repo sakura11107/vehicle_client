@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import * as reservationApi from '../api/reservation'
-import type { Reservation, ReservationQuery, AuditRequest, ReturnRequest } from '../types/reservation'
+import type { Reservation, ReservationQuery, AuditRequest, ReturnRequest, VehicleScheduleItem } from '../types/reservation'
 
 export const useReservationStore = defineStore('reservation', () => {
   const reservationList = ref<Reservation[]>([])
@@ -27,15 +27,9 @@ export const useReservationStore = defineStore('reservation', () => {
     }
   }
 
-  async function fetchGanttData() {
-    const res = await reservationApi.getReservationList({
-      page: 1,
-      size: 1000,
-      status: null,
-    })
-    return res.data.records.filter(
-      (r) => r.status === 0 || r.status === 1 || r.status === 3,
-    )
+  async function fetchGanttData(): Promise<VehicleScheduleItem[]> {
+    const res = await reservationApi.getSchedule()
+    return res.data
   }
 
   async function getById(id: number) {

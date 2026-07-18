@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useVehicleStore } from '../../../stores/vehicle'
+import { getVehicleList } from '../../../api/vehicle'
+import { getSchedule } from '../../../api/reservation'
 import { useReservationStore } from '../../../stores/reservation'
 import type { Vehicle } from '../../../types/vehicle'
+import type { VehicleScheduleItem } from '../../../types/reservation'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 
@@ -17,11 +19,12 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const vehicleStore = useVehicleStore()
 const reservationStore = useReservationStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 const vehicleList = ref<Vehicle[]>([])
+const vehicleSchedule = ref<VehicleScheduleItem[]>([])
+const conflictItems = ref<VehicleScheduleItem[]>([])
 
 const form = reactive({
   vehicleId: null as number | null,
@@ -38,8 +41,32 @@ const rules = reactive<FormRules>({
 })
 
 async function loadVehicles() {
-  const res = await vehicleStore.fetchList()
-  vehicleList.value = vehicleStore.vehicleList
+  const res = await getVehicleList({ page: 1, size: 100, plateNumber: '', brand: '', model: '', color: '', status: null })
+  vehicleList.value = res.data.records
+}
+
+async function loadVehicleSchedule(vehicleId: number) {
+  const res = await getSchedule(vehicleId)
+  vehicleSchedule.value = res.data
+  checkConflict()
+}
+
+function checkConflict() {
+  if (!form.vehicleId || !form.startTime || !form.endTime) {
+    conflictItems.value = []
+    return
+  }
+  const start = new Date(form.startTime).getTime()
+  const end = new Date(form.endTime).getTime()
+  if (start >= end) {
+    conflictItems.value = []
+    return
+  }
+  conflictItems.value = vehicleSchedule.value.filter((item) => {
+    const itemStart = new Date(item.startTime).getTime()
+    const itemEnd = new Date(item.endTime).getTime()
+    return itemStart < end && itemEnd > start
+  })
 }
 
 async function handleSubmit() {
@@ -70,9 +97,9 @@ function resetForm() {
   form.startTime = ''
   form.endTime = ''
   form.purpose = ''
+  vehicleSchedule.value = []
+  conflictItems.value = []
 }
-
-import { watch } from 'vue'
 
 watch(
   () => props.visible,
@@ -83,13 +110,32 @@ watch(
     }
   },
 )
+
+watch(
+  () => form.vehicleId,
+  (val) => {
+    if (val) {
+      loadVehicleSchedule(val)
+    } else {
+      vehicleSchedule.value = []
+      conflictItems.value = []
+    }
+  },
+)
+
+watch(
+  () => [form.startTime, form.endTime],
+  () => {
+    checkConflict()
+  },
+)
 </script>
 
 <template>
   <el-dialog
     :model-value="props.visible"
     :title="t('reservation.add')"
-    width="500px"
+    width="640px"
     @close="handleClose"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="auto" v-loading="loading">
@@ -126,9 +172,88 @@ watch(
       </el-form-item>
     </el-form>
 
+    <div v-if="vehicleSchedule.length > 0" class="schedule-section">
+      <div class="schedule-title">{{ t('reservation.vehicleReservations') }}</div>
+      <div class="schedule-list">
+        <div v-for="item in vehicleSchedule" :key="item.id" class="schedule-item">
+          <span class="schedule-user">{{ item.userName }}</span>
+          <span class="schedule-purpose">{{ item.purpose }}</span>
+          <span class="schedule-time">{{ item.startTime }} ~ {{ item.endTime }}</span>
+          <el-tag size="small" :type="item.status === 0 ? 'warning' : item.status === 1 ? '' : 'success'">
+            {{ t(`reservation.statusMap.${item.status}`) }}
+          </el-tag>
+        </div>
+      </div>
+    </div>
+
+    <el-alert
+      v-if="conflictItems.length > 0"
+      :title="t('reservation.timeConflict')"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="conflict-alert"
+    >
+      <div v-for="item in conflictItems" :key="item.id" class="conflict-item">
+        {{ item.userName }} - {{ item.purpose }} ({{ item.startTime }} ~ {{ item.endTime }})
+      </div>
+    </el-alert>
+
     <template #footer>
       <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
       <el-button type="primary" :loading="loading" @click="handleSubmit">{{ t('common.confirm') }}</el-button>
     </template>
   </el-dialog>
 </template>
+
+<style scoped>
+.schedule-section {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+}
+.schedule-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 4px 0;
+}
+.schedule-user {
+  font-weight: 500;
+  color: #374151;
+  min-width: 60px;
+}
+.schedule-purpose {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.schedule-time {
+  color: #9ca3af;
+  white-space: nowrap;
+}
+.conflict-alert {
+  margin-top: 12px;
+}
+.conflict-item {
+  font-size: 12px;
+  color: #92400e;
+  line-height: 1.8;
+}
+</style>

@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useVehicleStore } from '../../stores/vehicle'
 import { useReservationStore } from '../../stores/reservation'
 import type { Vehicle } from '../../types/vehicle'
-import type { Reservation } from '../../types/reservation'
+import type { VehicleScheduleItem } from '../../types/reservation'
 import * as echarts from 'echarts'
 import ReservationForm from './components/ReservationForm.vue'
 import ReservationDetail from './components/ReservationDetail.vue'
@@ -47,7 +47,7 @@ async function loadData() {
     statusLabelMap[1] = t('reservation.statusMap.1')
     statusLabelMap[3] = t('reservation.statusMap.3')
 
-    await vehicleStore.fetchList()
+    await vehicleStore.fetchList({ page: 1, size: 100 })
     const allVehicles = vehicleStore.vehicleList
 
     const reservations = await reservationStore.fetchGanttData()
@@ -63,7 +63,7 @@ async function loadData() {
   }
 }
 
-function renderChart(vehicles: Vehicle[], reservations: Reservation[], _vehicleMap: Map<number, Vehicle>) {
+function renderChart(vehicles: Vehicle[], reservations: VehicleScheduleItem[], _vehicleMap: Map<number, Vehicle>) {
   if (!chartRef.value) return
 
   if (chart) {
@@ -80,7 +80,7 @@ function renderChart(vehicles: Vehicle[], reservations: Reservation[], _vehicleM
 
   const seriesData: Array<{
     name: string
-    value: [number, number, number, number, string, string]
+    value: [number, number, number, number, string, string, number]
   }> = []
 
   reservations.forEach((r) => {
@@ -95,7 +95,7 @@ function renderChart(vehicles: Vehicle[], reservations: Reservation[], _vehicleM
 
     seriesData.push({
       name: r.purpose,
-      value: [vehicleIndex, start, end, r.status ?? 0, r.purpose, r.userName ?? ''],
+      value: [vehicleIndex, start, end, r.status, r.purpose, r.userName, r.id],
     })
   })
 
@@ -114,7 +114,7 @@ function renderChart(vehicles: Vehicle[], reservations: Reservation[], _vehicleM
       },
       extraCssText: 'box-shadow: 0 10px 40px rgba(0,0,0,0.12); border-radius: 12px; max-width: 320px;',
       formatter(params: any) {
-        const p = params as { value?: [number, number, number, number, string, string] }
+        const p = params as { value?: [number, number, number, number, string, string, number] }
         if (!p.value) return ''
         const start = new Date(p.value[1])
         const end = new Date(p.value[2])
@@ -325,7 +325,7 @@ function renderChart(vehicles: Vehicle[], reservations: Reservation[], _vehicleM
             },
           }
         },
-        dimensions: ['vehicleIndex', 'startTime', 'endTime', 'status', 'purpose', 'userName'],
+        dimensions: ['vehicleIndex', 'startTime', 'endTime', 'status', 'purpose', 'userName', 'reservationId'],
         encode: {
           x: [1, 2],
           y: 0,
@@ -385,15 +385,10 @@ function renderChart(vehicles: Vehicle[], reservations: Reservation[], _vehicleM
   chart.setOption(option)
 
   chart.on('click', (params: echarts.ECElementEvent) => {
-    const value = params.value as [number, number, number, number, string, string] | undefined
-    if (value) {
-      const vehicleIndex = value[0]
-      const vehicleId = vehicleIds[vehicleIndex]
-      const reservationsForVehicle = reservations.filter((r) => r.vehicleId === vehicleId)
-      if (reservationsForVehicle.length > 0) {
-        detailId.value = reservationsForVehicle[0].id ?? null
-        showDetail.value = true
-      }
+    const value = params.value as [number, number, number, number, string, string, number] | undefined
+    if (value && value[6]) {
+      detailId.value = value[6]
+      showDetail.value = true
     }
   })
 }

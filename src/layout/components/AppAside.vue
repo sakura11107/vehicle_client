@@ -3,12 +3,12 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   HomeFilled,
-  Setting,
   User,
   Platform,
   Calendar,
   Message,
 } from '@element-plus/icons-vue'
+import { useUserStore } from '../../stores/user'
 
 defineProps<{
   isCollapse: boolean
@@ -16,6 +16,7 @@ defineProps<{
 
 const router = useRouter()
 const { t } = useI18n()
+const userStore = useUserStore()
 
 function handleMenuSelect(index: string) {
   router.push(index)
@@ -40,11 +41,11 @@ function handleMenuSelect(index: string) {
       <el-icon><HomeFilled /></el-icon>
       <template #title>{{ t('aside.dashboard') }}</template>
     </el-menu-item>
-    <el-menu-item index="/vehicle">
+    <el-menu-item v-if="userStore.isManagerOrAdmin" index="/vehicle">
       <el-icon><Platform /></el-icon>
       <template #title>{{ t('aside.vehicle') }}</template>
     </el-menu-item>
-    <el-menu-item index="/user">
+    <el-menu-item v-if="userStore.isAdmin" index="/user">
       <el-icon><User /></el-icon>
       <template #title>{{ t('aside.user') }}</template>
     </el-menu-item>
@@ -55,10 +56,6 @@ function handleMenuSelect(index: string) {
     <el-menu-item index="/message">
       <el-icon><Message /></el-icon>
       <template #title>{{ t('aside.message') }}</template>
-    </el-menu-item>
-    <el-menu-item index="/settings">
-      <el-icon><Setting /></el-icon>
-      <template #title>{{ t('aside.settings') }}</template>
     </el-menu-item>
   </el-menu>
 </template>

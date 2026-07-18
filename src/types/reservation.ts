@@ -28,6 +28,17 @@ export interface Reservation {
   auditUserName?: string
 }
 
+export interface VehicleScheduleItem {
+  id: number
+  vehicleId: number
+  vehiclePlateNumber: string
+  userName: string
+  purpose: string
+  startTime: string
+  endTime: string
+  status: number
+}
+
 export interface ReservationQuery {
   page: number
   size: number

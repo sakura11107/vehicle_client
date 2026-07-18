@@ -77,8 +77,8 @@ watch(
       <el-descriptions-item :label="t('reservation.status')">
         <el-tag :type="getStatusType(detail.status)">{{ getStatusLabel(detail.status) }}</el-tag>
       </el-descriptions-item>
-      <el-descriptions-item :label="t('reservation.vehicle')">{{ detail.plateNumber || detail.vehicleId }}</el-descriptions-item>
-      <el-descriptions-item :label="t('reservation.applicant')">{{ detail.username || detail.userId }}</el-descriptions-item>
+      <el-descriptions-item :label="t('reservation.vehicle')">{{ detail.vehiclePlateNumber || detail.vehicleId }}</el-descriptions-item>
+      <el-descriptions-item :label="t('reservation.applicant')">{{ detail.userName || detail.userId }}</el-descriptions-item>
       <el-descriptions-item :label="t('reservation.startTime')">{{ detail.startTime }}</el-descriptions-item>
       <el-descriptions-item :label="t('reservation.endTime')">{{ detail.endTime }}</el-descriptions-item>
       <el-descriptions-item :label="t('reservation.purpose')" :span="2">{{ detail.purpose }}</el-descriptions-item>

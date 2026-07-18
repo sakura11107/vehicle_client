@@ -9,8 +9,13 @@ export interface UserInfo {
   updatedTime: string
 }
 
+export interface FieldError {
+  field: string
+  code: string
+}
+
 export interface ApiResponse<T> {
   code: string
   data: T
-  errors: string | null
+  errors: FieldError[] | null
 }

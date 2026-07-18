@@ -2,12 +2,14 @@
 import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useReservationStore } from '../../stores/reservation'
+import { useUserStore } from '../../stores/user'
 import type { Reservation } from '../../types/reservation'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ReservationDetail from '../dashboard/components/ReservationDetail.vue'
 
 const { t } = useI18n()
 const reservationStore = useReservationStore()
+const userStore = useUserStore()
 
 const showDetail = ref(false)
 const detailId = ref<number | null>(null)
@@ -84,6 +86,22 @@ function handleDetail(row: Reservation) {
   showDetail.value = true
 }
 
+/** 审核：申请中 + 车辆管理员及以上 + 非本人申请（与后端规则一致） */
+function canAudit(row: Reservation) {
+  return row.status === 0 && userStore.isManagerOrAdmin && row.userId !== userStore.currentUserId
+}
+
+/** 还车：已审核/使用中 + 申请人本人或车辆管理员及以上（与后端规则一致） */
+function canReturn(row: Reservation) {
+  return (row.status === 1 || row.status === 3)
+    && (row.userId === userStore.currentUserId || userStore.isManagerOrAdmin)
+}
+
+/** 取消：申请中 + 申请人本人（与后端规则一致） */
+function canCancel(row: Reservation) {
+  return row.status === 0 && row.userId === userStore.currentUserId
+}
+
 function handleCancel(row: Reservation) {
   ElMessageBox.confirm(t('reservation.cancelConfirm'), t('common.confirm'), { type: 'warning' })
     .then(async () => {
@@ -95,7 +113,7 @@ function handleCancel(row: Reservation) {
 }
 
 function handleAuditOpen(row: Reservation, approved: boolean) {
-  auditForm.id = row.id
+  auditForm.id = row.id ?? null
   auditForm.approved = approved
   auditForm.remark = ''
   showAudit.value = true
@@ -113,7 +131,7 @@ async function handleAuditSubmit() {
 }
 
 function handleReturnOpen(row: Reservation) {
-  returnForm.id = row.id
+  returnForm.id = row.id ?? null
   returnForm.returnMileage = 0
   returnForm.returnFuel = 0
   returnForm.parkingFee = 0
@@ -183,16 +201,16 @@ reservationStore.fetchList()
             <el-button type="primary" link size="small" @click="handleDetail(row)">
               {{ t('reservation.detail') }}
             </el-button>
-            <el-button v-if="row.status === 0" type="success" link size="small" @click="handleAuditOpen(row, true)">
+            <el-button v-if="canAudit(row)" type="success" link size="small" @click="handleAuditOpen(row, true)">
               {{ t('reservation.approve') }}
             </el-button>
-            <el-button v-if="row.status === 0" type="danger" link size="small" @click="handleAuditOpen(row, false)">
+            <el-button v-if="canAudit(row)" type="danger" link size="small" @click="handleAuditOpen(row, false)">
               {{ t('reservation.reject') }}
             </el-button>
-            <el-button v-if="row.status === 1 || row.status === 3" type="warning" link size="small" @click="handleReturnOpen(row)">
+            <el-button v-if="canReturn(row)" type="warning" link size="small" @click="handleReturnOpen(row)">
               {{ t('reservation.returnCar') }}
             </el-button>
-            <el-button v-if="row.status === 0" type="info" link size="small" @click="handleCancel(row)">
+            <el-button v-if="canCancel(row)" type="info" link size="small" @click="handleCancel(row)">
               {{ t('reservation.cancel') }}
             </el-button>
           </template>

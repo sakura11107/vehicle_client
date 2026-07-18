@@ -2,15 +2,15 @@
 import { computed, ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVehicleStore } from '../../stores/vehicle'
+import { useUserStore } from '../../stores/user'
 import type { Vehicle } from '../../types/vehicle'
-import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import VehicleForm from './components/VehicleForm.vue'
 
 const { t, locale } = useI18n()
 const vehicleStore = useVehicleStore()
+const userStore = useUserStore()
 
-const formRef = ref<FormInstance>()
 const showForm = ref(false)
 const editingId = ref<number | null>(null)
 
@@ -146,7 +146,7 @@ vehicleStore.fetchList()
       <template #header>
         <div class="card-header">
           <span>{{ t('vehicle.title') }}</span>
-          <el-button type="primary" @click="handleAdd">{{ t('vehicle.add') }}</el-button>
+          <el-button v-if="userStore.isManagerOrAdmin" type="primary" @click="handleAdd">{{ t('vehicle.add') }}</el-button>
         </div>
       </template>
 
@@ -168,10 +168,10 @@ vehicleStore.fetchList()
         <el-table-column prop="remark" :label="t('vehicle.remark')" width="150" show-overflow-tooltip />
         <el-table-column :label="t('vehicle.operation')" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleEdit(row)">
+            <el-button v-if="userStore.isManagerOrAdmin" type="primary" link size="small" @click="handleEdit(row)">
               {{ t('vehicle.edit') }}
             </el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(row)">
+            <el-button v-if="userStore.isManagerOrAdmin" type="danger" link size="small" @click="handleDelete(row)">
               {{ t('vehicle.delete') }}
             </el-button>
           </template>

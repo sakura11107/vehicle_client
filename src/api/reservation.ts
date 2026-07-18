@@ -1,5 +1,5 @@
 import request from '../utils/request'
-import type { Reservation, ReservationQuery, AuditRequest, ReturnRequest } from '../types/reservation'
+import type { Reservation, ReservationQuery, AuditRequest, ReturnRequest, VehicleScheduleItem } from '../types/reservation'
 import type { PageResult } from '../types/vehicle'
 import type { ApiResponse } from '../types/user'
 
@@ -37,4 +37,10 @@ export function auditReservation(id: number, data: AuditRequest) {
 
 export function returnVehicle(id: number, data: ReturnRequest) {
   return request.put(`/reservations/${id}/return`, data) as Promise<ApiResponse<Reservation>>
+}
+
+export function getSchedule(vehicleId?: number | null) {
+  const params: Record<string, string | number> = {}
+  if (vehicleId) params.vehicleId = vehicleId
+  return request.get('/reservations/schedule', { params }) as Promise<ApiResponse<VehicleScheduleItem[]>>
 }

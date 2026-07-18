@@ -1,26 +1,27 @@
 import request from '../utils/request'
 import type { MessageResponse, ConversationResponse, MessageCreateRequest, PageResponse } from '../types/message'
+import type { ApiResponse } from '../types/user'
 
 export function getConversations() {
-  return request.get('/messages/conversations') as Promise<{ code: string; data: ConversationResponse[] }>
+  return request.get('/messages/conversations') as Promise<ApiResponse<ConversationResponse[]>>
 }
 
 export function getUnreadCount() {
-  return request.get('/messages/unread-count') as Promise<{ code: string; data: number }>
+  return request.get('/messages/unread-count') as Promise<ApiResponse<number>>
 }
 
 export function getChatHistory(userId: number, page = 1, size = 20) {
-  return request.get(`/messages/${userId}`, { params: { page, size } }) as Promise<{ code: string; data: PageResponse<MessageResponse> }>
+  return request.get(`/messages/${userId}`, { params: { page, size } }) as Promise<ApiResponse<PageResponse<MessageResponse>>>
 }
 
 export function sendMessage(data: MessageCreateRequest) {
-  return request.post('/messages', data) as Promise<{ code: string; data: MessageResponse }>
+  return request.post('/messages', data) as Promise<ApiResponse<MessageResponse>>
 }
 
 export function markAsRead(userId: number) {
-  return request.put(`/messages/${userId}/read`) as Promise<{ code: string; data: void }>
+  return request.put(`/messages/${userId}/read`) as Promise<ApiResponse<void>>
 }
 
 export function markAllAsRead() {
-  return request.put('/messages/read-all') as Promise<{ code: string; data: void }>
+  return request.put('/messages/read-all') as Promise<ApiResponse<void>>
 }

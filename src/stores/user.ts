@@ -14,10 +14,14 @@ export const useUserStore = defineStore('user', () => {
 
   const isLoggedIn = computed(() => !!token.value)
 
-  const roleText = computed(() => {
-    const roles = ['普通用户', '车辆管理员', '系统管理员']
-    return roles[userInfo.value?.role ?? 0] ?? '未知'
-  })
+  /** 当前用户 ID，未登录为 null */
+  const currentUserId = computed(() => userInfo.value?.id ?? null)
+
+  /** 系统管理员（role=2） */
+  const isAdmin = computed(() => userInfo.value?.role === 2)
+
+  /** 车辆管理员或系统管理员（role>=1） */
+  const isManagerOrAdmin = computed(() => (userInfo.value?.role ?? 0) >= 1)
 
   function setToken(newToken: string) {
     token.value = newToken
@@ -48,5 +52,5 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('userInfo')
   }
 
-  return { token, userInfo, isLoggedIn, roleText, setToken, clearToken, login, register, logout }
+  return { token, userInfo, isLoggedIn, currentUserId, isAdmin, isManagerOrAdmin, setToken, clearToken, login, register, logout }
 })
