@@ -36,6 +36,30 @@ const searchForm = reactive({
   status: null as number | null,
 })
 
+const returnFormRef = ref()
+
+function requiredValidator(rule: any, value: any, callback: (err?: Error) => void) {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return callback(new Error(t('common.required')))
+    return callback()
+  }
+  if (value === null || value === undefined || String(value).trim() === '') {
+    return callback(new Error(t('common.required')))
+  }
+  callback()
+}
+
+const returnRules = reactive({
+  returnMileage: [{ validator: requiredValidator, trigger: ['blur', 'change'] }],
+  returnFuel: [{ validator: requiredValidator, trigger: ['blur', 'change'] }],
+  parkingFee: [{ validator: requiredValidator, trigger: ['blur', 'change'] }],
+  fuelFee: [{ validator: requiredValidator, trigger: ['blur', 'change'] }],
+  otherFee: [{ validator: requiredValidator, trigger: ['blur', 'change'] }],
+  returnRemark: [{ validator: requiredValidator, trigger: ['blur', 'change'] }],
+})
+
+// 使用 Element Plus 的 `only-number` 限制整数输入，故移除自定义输入过滤器
+
 const statusOptions = computed(() => [
   { label: t('reservation.statusMap.0'), value: 0 },
   { label: t('reservation.statusMap.1'), value: 1 },
@@ -44,6 +68,14 @@ const statusOptions = computed(() => [
   { label: t('reservation.statusMap.4'), value: 4 },
   { label: t('reservation.statusMap.5'), value: 5 },
 ])
+
+const fuelOptions = computed(() => {
+  const arr: { label: string; value: number }[] = []
+  for (let v = 10; v <= 100; v += 10) {
+    arr.push({ label: `${v}%`, value: v })
+  }
+  return arr
+})
 
 function getStatusType(status: number | undefined) {
   const map: Record<number, string> = {
@@ -143,6 +175,11 @@ function handleReturnOpen(row: Reservation) {
 
 async function handleReturnSubmit() {
   if (!returnForm.id) return
+  try {
+    await (returnFormRef.value as any).validate()
+  } catch (e) {
+    return
+  }
   await reservationStore.returnCar(returnForm.id, {
     returnMileage: returnForm.returnMileage,
     returnFuel: returnForm.returnFuel,
@@ -250,21 +287,23 @@ reservationStore.fetchList()
     </el-dialog>
 
     <el-dialog v-model="showReturn" :title="t('reservation.returnCar')" width="500px">
-      <el-form :model="returnForm" label-width="auto">
+      <el-form :model="returnForm" :rules="returnRules" ref="returnFormRef" label-width="auto">
         <el-form-item :label="t('reservation.returnMileage')">
-          <el-input-number v-model="returnForm.returnMileage" :min="0" />
+          <el-input v-model.number="returnForm.returnMileage" only-number inputmode="numeric" />
         </el-form-item>
         <el-form-item :label="t('reservation.returnFuel')">
-          <el-input-number v-model="returnForm.returnFuel" :min="0" :max="100" :precision="2" />
+          <el-select v-model="returnForm.returnFuel" placeholder="" clearable>
+            <el-option v-for="opt in fuelOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+          </el-select>
         </el-form-item>
         <el-form-item :label="t('reservation.parkingFee')">
-          <el-input-number v-model="returnForm.parkingFee" :min="0" :precision="2" />
+          <el-input v-model.number="returnForm.parkingFee" only-number inputmode="numeric" />
         </el-form-item>
         <el-form-item :label="t('reservation.fuelFee')">
-          <el-input-number v-model="returnForm.fuelFee" :min="0" :precision="2" />
+          <el-input v-model.number="returnForm.fuelFee" only-number inputmode="numeric" />
         </el-form-item>
         <el-form-item :label="t('reservation.otherFee')">
-          <el-input-number v-model="returnForm.otherFee" :min="0" :precision="2" />
+          <el-input v-model.number="returnForm.otherFee" only-number inputmode="numeric" />
         </el-form-item>
         <el-form-item :label="t('reservation.returnRemark')">
           <el-input v-model="returnForm.returnRemark" type="textarea" :rows="2" />

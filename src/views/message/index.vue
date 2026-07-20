@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '../../stores/user'
 import { useMessageStore } from '../../stores/message'
@@ -10,14 +10,33 @@ const userStore = useUserStore()
 const messageStore = useMessageStore()
 
 const inputMessage = ref('')
-const chatBodyRef = ref<HTMLDivElement>()
+const scrollbarRef = ref()
 const loadingOlder = ref(false)
+const noMoreHistory = ref(false)
+
+onMounted(async () => {
+  await messageStore.fetchConversations()
+  if (messageStore.currentChatUserId) {
+    const conv = messageStore.conversations.find((c) => c.userId === messageStore.currentChatUserId)
+    if (conv) {
+      await messageStore.fetchChatHistory(messageStore.currentChatUserId)
+      await messageStore.markAsRead(messageStore.currentChatUserId)
+    } else {
+      await messageStore.openChat(messageStore.currentChatUserId)
+    }
+    noMoreHistory.value = messageStore.chatMessages.length >= messageStore.chatTotal
+    nextTick(() => {
+      scrollToBottom()
+      autoLoadIfNotScrollable()
+    })
+  }
+})
 
 const myUserId = computed(() => userStore.userInfo?.id ?? 0)
 
 const currentUserName = computed(() => {
   const conv = messageStore.conversations.find((c) => c.userId === messageStore.currentChatUserId)
-  return conv?.userName ?? ''
+  return conv?.userName ?? messageStore.currentChatUserName ?? ''
 })
 
 function formatTime(dateStr: string) {
@@ -47,29 +66,51 @@ function formatMessageTime(dateStr: string) {
   return `${month}月${day}日 ${hours}:${minutes}`
 }
 
-function handleSelectConv(userId: number) {
-  messageStore.openChat(userId)
-  nextTick(scrollToBottom)
+async function handleSelectConv(userId: number) {
+  noMoreHistory.value = false
+  await messageStore.openChat(userId)
+  noMoreHistory.value = messageStore.chatMessages.length >= messageStore.chatTotal
+  nextTick(() => {
+    scrollToBottom()
+    autoLoadIfNotScrollable()
+  })
 }
 
 function scrollToBottom() {
-  if (chatBodyRef.value) {
-    chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight
+  if (scrollbarRef.value) {
+    const wrapRef = scrollbarRef.value.wrapRef
+    if (wrapRef) {
+      wrapRef.scrollTop = wrapRef.scrollHeight
+    }
   }
 }
 
-async function handleChatScroll() {
-  const el = chatBodyRef.value
-  if (!el || el.scrollTop > 50) return
+async function autoLoadIfNotScrollable() {
+  const wrapRef = scrollbarRef.value?.wrapRef
+  if (!wrapRef) return
+  while (wrapRef.scrollHeight <= wrapRef.clientHeight && !noMoreHistory.value && !messageStore.chatLoading) {
+    await messageStore.loadMoreHistory(messageStore.currentChatUserId!)
+    noMoreHistory.value = messageStore.chatMessages.length >= messageStore.chatTotal
+    await nextTick()
+  }
+  scrollToBottom()
+}
+
+async function handleChatScroll({ scrollTop }: { scrollTop: number }) {
+  if (scrollTop > 10) return
   if (messageStore.chatLoading) return
   if (!messageStore.currentChatUserId) return
-  if (messageStore.chatMessages.length >= messageStore.chatTotal) return
+  if (noMoreHistory.value) return
+
+  const wrapRef = scrollbarRef.value?.wrapRef
+  if (!wrapRef) return
 
   loadingOlder.value = true
-  const prevHeight = el.scrollHeight
+  const prevHeight = wrapRef.scrollHeight
   await messageStore.loadMoreHistory(messageStore.currentChatUserId)
+  noMoreHistory.value = messageStore.chatMessages.length >= messageStore.chatTotal
   nextTick(() => {
-    el.scrollTop = el.scrollHeight - prevHeight
+    wrapRef.scrollTop = wrapRef.scrollHeight - prevHeight
     loadingOlder.value = false
   })
 }
@@ -142,10 +183,14 @@ watch(() => messageStore.chatMessages.length, () => {
           <div class="chat-header">
             <span>{{ currentUserName }}</span>
           </div>
-          <div ref="chatBodyRef" class="chat-body" @scroll="handleChatScroll">
-            <div v-if="loadingOlder" class="chat-loading-older">
-              <el-icon class="is-loading"><ChatDotRound /></el-icon>
-            </div>
+          <el-scrollbar ref="scrollbarRef" class="chat-body" @scroll="handleChatScroll">
+            <div class="chat-content">
+              <div v-if="noMoreHistory && messageStore.chatMessages.length > 0" class="chat-no-more">
+                {{ t('message.noMoreHistory') }}
+              </div>
+              <div v-if="loadingOlder" class="chat-loading-older">
+                <el-icon class="is-loading"><ChatDotRound /></el-icon>
+              </div>
             <div v-if="messageStore.chatLoading && messageStore.chatMessages.length === 0" class="chat-loading">
               <el-icon class="is-loading"><ChatDotRound /></el-icon>
             </div>
@@ -162,7 +207,8 @@ watch(() => messageStore.chatMessages.length, () => {
               <div class="bubble-content">{{ msg.content }}</div>
               <div class="bubble-time">{{ formatMessageTime(msg.createdTime) }}</div>
             </div>
-          </div>
+            </div>
+          </el-scrollbar>
           <div class="chat-input">
             <el-input
               v-model="inputMessage"
@@ -306,7 +352,9 @@ watch(() => messageStore.chatMessages.length, () => {
 }
 .chat-body {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
+}
+.chat-content {
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
@@ -324,6 +372,12 @@ watch(() => messageStore.chatMessages.length, () => {
   padding: 4px 0;
   color: #9ca3af;
   font-size: 18px;
+}
+.chat-no-more {
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  padding: 8px 0;
 }
 .chat-bubble {
   max-width: 65%;

@@ -2,15 +2,15 @@ import request from '../utils/request'
 import type { MessageResponse, ConversationResponse, MessageCreateRequest, PageResponse } from '../types/message'
 import type { ApiResponse } from '../types/user'
 
-export function getConversations() {
-  return request.get('/messages/conversations') as Promise<ApiResponse<ConversationResponse[]>>
+export function getConversations(page = 1, size = 20) {
+  return request.get('/messages/conversations', { params: { page, size } }) as Promise<ApiResponse<PageResponse<ConversationResponse>>>
 }
 
 export function getUnreadCount() {
   return request.get('/messages/unread-count') as Promise<ApiResponse<number>>
 }
 
-export function getChatHistory(userId: number, page = 1, size = 20) {
+export function getChatHistory(userId: number, page = 1, size = 10) {
   return request.get(`/messages/${userId}`, { params: { page, size } }) as Promise<ApiResponse<PageResponse<MessageResponse>>>
 }
 

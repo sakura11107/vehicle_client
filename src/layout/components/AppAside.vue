@@ -7,6 +7,7 @@ import {
   Platform,
   Calendar,
   Message,
+  Notebook,
 } from '@element-plus/icons-vue'
 import { useUserStore } from '../../stores/user'
 
@@ -52,6 +53,10 @@ function handleMenuSelect(index: string) {
     <el-menu-item index="/reservation">
       <el-icon><Calendar /></el-icon>
       <template #title>{{ t('aside.reservation') }}</template>
+    </el-menu-item>
+    <el-menu-item index="/contacts">
+      <el-icon><Notebook /></el-icon>
+      <template #title>{{ t('aside.contacts') }}</template>
     </el-menu-item>
     <el-menu-item index="/message">
       <el-icon><Message /></el-icon>

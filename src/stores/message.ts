@@ -8,6 +8,7 @@ export const useMessageStore = defineStore('message', () => {
   const conversations = ref<ConversationResponse[]>([])
   const unreadCount = ref(0)
   const currentChatUserId = ref<number | null>(null)
+  const currentChatUserName = ref<string>('')
   const chatMessages = ref<MessageResponse[]>([])
   const chatTotal = ref(0)
   const chatPage = ref(1)
@@ -42,7 +43,20 @@ export const useMessageStore = defineStore('message', () => {
 
   async function fetchConversations() {
     const res = await messageApi.getConversations()
-    conversations.value = res.data
+    // 合并：后端会话更新本地已有的，保留本地独有的在开头
+    const serverConvs = res.data.records
+    const merged = [...conversations.value]
+    for (const serverConv of serverConvs) {
+      const index = merged.findIndex((local) => local.userId === serverConv.userId)
+      if (index >= 0) {
+        // 本地已有，用后端数据更新
+        merged[index] = serverConv
+      } else {
+        // 后端有本地没有，添加到末尾
+        merged.push(serverConv)
+      }
+    }
+    conversations.value = merged
   }
 
   async function fetchUnreadCount() {
@@ -121,6 +135,23 @@ export const useMessageStore = defineStore('message', () => {
     try {
       await fetchChatHistory(userId)
       await markAsRead(userId)
+      // 确保会话存在
+      const exists = conversations.value.find((c) => c.userId === userId)
+      if (!exists) {
+        // 从聊天消息中获取用户名，或使用当前设置的用户名
+        let name = currentChatUserName.value
+        if (!name && chatMessages.value.length > 0) {
+          const msg = chatMessages.value[0]
+          name = msg.senderId === userId ? msg.senderName : msg.receiverName
+        }
+        conversations.value.unshift({
+          userId,
+          userName: name || `User ${userId}`,
+          lastMessage: chatMessages.value.length > 0 ? chatMessages.value[chatMessages.value.length - 1].content : '',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0,
+        })
+      }
     } catch (error) {
       console.error('Failed to open chat:', error)
     }
@@ -131,10 +162,24 @@ export const useMessageStore = defineStore('message', () => {
     chatMessages.value = []
   }
 
+  function ensureConversation(userId: number, userName: string) {
+    const exists = conversations.value.find((c) => c.userId === userId)
+    if (!exists) {
+      conversations.value.unshift({
+        userId,
+        userName,
+        lastMessage: '',
+        lastMessageTime: new Date().toISOString(),
+        unreadCount: 0,
+      })
+    }
+  }
+
   return {
     conversations,
     unreadCount,
     currentChatUserId,
+    currentChatUserName,
     chatMessages,
     chatTotal,
     chatLoading,
@@ -149,5 +194,6 @@ export const useMessageStore = defineStore('message', () => {
     markAllAsRead,
     openChat,
     closeChat,
+    ensureConversation,
   }
 })
