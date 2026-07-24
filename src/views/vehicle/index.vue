@@ -12,7 +12,7 @@ const vehicleStore = useVehicleStore()
 const userStore = useUserStore()
 
 const showForm = ref(false)
-const editingId = ref<number | null>(null)
+const editingId = ref<string | null>(null)
 
 const searchForm = reactive({
   plateNumber: '',
@@ -25,7 +25,6 @@ const searchForm = reactive({
 const statusOptions = computed(() => {
   locale.value
   return [
-    { label: t('vehicle.statusMap.0'), value: 0 },
     { label: t('vehicle.statusMap.1'), value: 1 },
     { label: t('vehicle.statusMap.2'), value: 2 },
     { label: t('vehicle.statusMap.3'), value: 3 },
@@ -34,7 +33,6 @@ const statusOptions = computed(() => {
 
 function getStatusType(status: number) {
   const map: Record<number, string> = {
-    0: 'info',
     1: 'success',
     2: 'warning',
     3: 'danger',
@@ -44,7 +42,6 @@ function getStatusType(status: number) {
 
 function getStatusLabel(status: number) {
   const map: Record<number, string> = {
-    0: t('vehicle.statusMap.0'),
     1: t('vehicle.statusMap.1'),
     2: t('vehicle.statusMap.2'),
     3: t('vehicle.statusMap.3'),

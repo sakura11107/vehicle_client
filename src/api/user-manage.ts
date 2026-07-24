@@ -14,7 +14,7 @@ export function getUserList(params: UserQuery) {
   return request.get('/users', { params: query }) as Promise<ApiResponse<PageResult<User>>>
 }
 
-export function getUserById(id: number) {
+export function getUserById(id: string) {
   return request.get(`/users/${id}`) as Promise<ApiResponse<User>>
 }
 
@@ -22,10 +22,10 @@ export function createUser(data: User) {
   return request.post('/users', data) as Promise<ApiResponse<User>>
 }
 
-export function updateUser(id: number, data: User) {
+export function updateUser(id: string, data: User) {
   return request.put(`/users/${id}`, data) as Promise<ApiResponse<User>>
 }
 
-export function deleteUser(id: number) {
+export function deleteUser(id: string) {
   return request.delete(`/users/${id}`) as Promise<ApiResponse<void>>
 }

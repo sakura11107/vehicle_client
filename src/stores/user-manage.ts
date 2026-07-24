@@ -26,7 +26,7 @@ export const useUserManageStore = defineStore('userManage', () => {
     }
   }
 
-  async function getById(id: number) {
+  async function getById(id: string) {
     const res = await userApi.getUserById(id)
     return res.data
   }
@@ -36,12 +36,12 @@ export const useUserManageStore = defineStore('userManage', () => {
     return res.data
   }
 
-  async function update(id: number, data: User) {
+  async function update(id: string, data: User) {
     const res = await userApi.updateUser(id, data)
     return res.data
   }
 
-  async function remove(id: number) {
+  async function remove(id: string) {
     await userApi.deleteUser(id)
   }
 

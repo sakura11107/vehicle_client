@@ -17,7 +17,7 @@ const chartRef = ref<HTMLDivElement>()
 const loading = ref(false)
 const showForm = ref(false)
 const showDetail = ref(false)
-const detailId = ref<number | null>(null)
+const detailId = ref<string | null>(null)
 const hasData = ref(false)
 
 let chart: echarts.ECharts | null = null
@@ -25,13 +25,11 @@ let chart: echarts.ECharts | null = null
 const statusColorMap: Record<number, string> = {
   0: '#f5a623',
   1: '#5b9bd5',
-  3: '#70c4a8',
 }
 
 const statusGradientMap: Record<number, [string, string]> = {
   0: ['#fcd34d', '#f59e0b'],
   1: ['#93c5fd', '#3b82f6'],
-  3: ['#6ee7b7', '#10b981'],
 }
 
 const statusLabelMap: Record<number, string> = {}
@@ -45,16 +43,18 @@ async function loadData() {
   try {
     statusLabelMap[0] = t('reservation.statusMap.0')
     statusLabelMap[1] = t('reservation.statusMap.1')
-    statusLabelMap[3] = t('reservation.statusMap.3')
 
     await vehicleStore.fetchList({ page: 1, size: 100 })
     const allVehicles = vehicleStore.vehicleList
 
-    const reservations = await reservationStore.fetchGanttData()
+    const now = new Date()
+    const from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const to = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    const reservations = await reservationStore.fetchGanttData(from, to)
 
     hasData.value = reservations.length > 0
 
-    const vehicleMap = new Map<number, Vehicle>()
+    const vehicleMap = new Map<string, Vehicle>()
     allVehicles.forEach((v) => vehicleMap.set(v.id!, v))
 
     renderChart(allVehicles, reservations, vehicleMap)
@@ -63,7 +63,7 @@ async function loadData() {
   }
 }
 
-function renderChart(vehicles: Vehicle[], reservations: VehicleScheduleItem[], _vehicleMap: Map<number, Vehicle>) {
+function renderChart(vehicles: Vehicle[], reservations: VehicleScheduleItem[], _vehicleMap: Map<string, Vehicle>) {
   if (!chartRef.value) return
 
   if (chart) {
@@ -80,7 +80,7 @@ function renderChart(vehicles: Vehicle[], reservations: VehicleScheduleItem[], _
 
   const seriesData: Array<{
     name: string
-    value: [number, number, number, number, string, string, number]
+    value: [number, number, number, number, string, string, string]
   }> = []
 
   reservations.forEach((r) => {
@@ -385,7 +385,7 @@ function renderChart(vehicles: Vehicle[], reservations: VehicleScheduleItem[], _
   chart.setOption(option)
 
   chart.on('click', (params: echarts.ECElementEvent) => {
-    const value = params.value as [number, number, number, number, string, string, number] | undefined
+    const value = params.value as [number, number, number, number, string, string, string] | undefined
     if (value && value[6]) {
       detailId.value = value[6]
       showDetail.value = true
@@ -429,10 +429,6 @@ onUnmounted(() => {
           <span class="legend-item">
             <span class="legend-dot" style="background: linear-gradient(135deg, #93c5fd, #3b82f6);"></span>
             {{ t('reservation.statusMap.1') }}
-          </span>
-          <span class="legend-item">
-            <span class="legend-dot" style="background: linear-gradient(135deg, #6ee7b7, #10b981);"></span>
-            {{ t('reservation.statusMap.3') }}
           </span>
           <span class="legend-item">
             <span class="legend-line"></span>

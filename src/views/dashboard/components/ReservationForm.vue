@@ -27,7 +27,7 @@ const vehicleSchedule = ref<VehicleScheduleItem[]>([])
 const conflictItems = ref<VehicleScheduleItem[]>([])
 
 const form = reactive({
-  vehicleId: null as number | null,
+  vehicleId: null as string | null,
   startTime: '',
   endTime: '',
   purpose: '',
@@ -45,7 +45,7 @@ async function loadVehicles() {
   vehicleList.value = res.data.records
 }
 
-async function loadVehicleSchedule(vehicleId: number) {
+async function loadVehicleSchedule(vehicleId: string) {
   const res = await getSchedule(vehicleId)
   vehicleSchedule.value = res.data
   checkConflict()
@@ -179,7 +179,7 @@ watch(
           <span class="schedule-user">{{ item.userName }}</span>
           <span class="schedule-purpose">{{ item.purpose }}</span>
           <span class="schedule-time">{{ item.startTime }} ~ {{ item.endTime }}</span>
-          <el-tag size="small" :type="item.status === 0 ? 'warning' : item.status === 1 ? '' : 'success'">
+          <el-tag size="small" :type="item.status === 0 ? 'warning' : ''">
             {{ t(`reservation.statusMap.${item.status}`) }}
           </el-tag>
         </div>

@@ -8,7 +8,7 @@ import { ElMessage } from 'element-plus'
 
 const props = defineProps<{
   visible: boolean
-  userId: number | null
+  userId: string | null
 }>()
 
 const emit = defineEmits<{

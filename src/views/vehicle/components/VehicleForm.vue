@@ -8,7 +8,7 @@ import { ElMessage } from 'element-plus'
 
 const props = defineProps<{
   visible: boolean
-  vehicleId: number | null
+  vehicleId: string | null
 }>()
 
 const emit = defineEmits<{
@@ -44,7 +44,6 @@ const rules = reactive<FormRules>({
 const statusOptions = computed(() => {
   locale.value
   return [
-    { label: t('vehicle.statusMap.0'), value: 0 },
     { label: t('vehicle.statusMap.1'), value: 1 },
     { label: t('vehicle.statusMap.2'), value: 2 },
     { label: t('vehicle.statusMap.3'), value: 3 },

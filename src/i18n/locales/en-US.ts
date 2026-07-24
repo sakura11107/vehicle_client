@@ -81,9 +81,8 @@ export default {
     modelRequired: 'Please enter model',
     statusRequired: 'Please select status',
     statusMap: {
-      0: 'Disabled',
       1: 'Idle',
-      2: 'In Use',
+      2: 'Reserved',
       3: 'Maintenance',
     },
     placeholder: {
@@ -180,7 +179,6 @@ export default {
       0: 'Pending',
       1: 'Approved',
       2: 'Cancelled',
-      3: 'In Use',
       4: 'Returned',
       5: 'Rejected',
     },

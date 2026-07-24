@@ -33,7 +33,7 @@ export const useVehicleStore = defineStore('vehicle', () => {
     }
   }
 
-  async function getById(id: number) {
+  async function getById(id: string) {
     const res = await vehicleApi.getVehicleById(id)
     return res.data
   }
@@ -43,12 +43,12 @@ export const useVehicleStore = defineStore('vehicle', () => {
     return res.data
   }
 
-  async function update(id: number, data: Vehicle) {
+  async function update(id: string, data: Vehicle) {
     const res = await vehicleApi.updateVehicle(id, data)
     return res.data
   }
 
-  async function remove(id: number) {
+  async function remove(id: string) {
     await vehicleApi.deleteVehicle(id)
   }
 

@@ -12,18 +12,18 @@ const reservationStore = useReservationStore()
 const userStore = useUserStore()
 
 const showDetail = ref(false)
-const detailId = ref<number | null>(null)
+const detailId = ref<string | null>(null)
 
 const showAudit = ref(false)
 const auditForm = reactive({
-  id: null as number | null,
+  id: null as string | null,
   approved: true,
   remark: '',
 })
 
 const showReturn = ref(false)
 const returnForm = reactive({
-  id: null as number | null,
+  id: null as string | null,
   returnMileage: 0,
   returnFuel: 0,
   parkingFee: 0,
@@ -38,7 +38,7 @@ const searchForm = reactive({
 
 const returnFormRef = ref()
 
-function requiredValidator(rule: any, value: any, callback: (err?: Error) => void) {
+function requiredValidator(_rule: any, value: any, callback: (err?: Error) => void) {
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) return callback(new Error(t('common.required')))
     return callback()
@@ -64,7 +64,6 @@ const statusOptions = computed(() => [
   { label: t('reservation.statusMap.0'), value: 0 },
   { label: t('reservation.statusMap.1'), value: 1 },
   { label: t('reservation.statusMap.2'), value: 2 },
-  { label: t('reservation.statusMap.3'), value: 3 },
   { label: t('reservation.statusMap.4'), value: 4 },
   { label: t('reservation.statusMap.5'), value: 5 },
 ])
@@ -82,7 +81,6 @@ function getStatusType(status: number | undefined) {
     0: 'warning',
     1: 'primary',
     2: 'info',
-    3: 'success',
     4: '',
     5: 'danger',
   }
@@ -94,7 +92,6 @@ function getStatusLabel(status: number | undefined) {
     0: t('reservation.statusMap.0'),
     1: t('reservation.statusMap.1'),
     2: t('reservation.statusMap.2'),
-    3: t('reservation.statusMap.3'),
     4: t('reservation.statusMap.4'),
     5: t('reservation.statusMap.5'),
   }
@@ -123,10 +120,9 @@ function canAudit(row: Reservation) {
   return row.status === 0 && userStore.isManagerOrAdmin && row.userId !== userStore.currentUserId
 }
 
-/** 还车：已审核/使用中 + 申请人本人或车辆管理员及以上（与后端规则一致） */
+/** 还车：已通过 + 申请人本人（与后端规则一致） */
 function canReturn(row: Reservation) {
-  return (row.status === 1 || row.status === 3)
-    && (row.userId === userStore.currentUserId || userStore.isManagerOrAdmin)
+  return row.status === 1 && row.userId === userStore.currentUserId
 }
 
 /** 取消：申请中 + 申请人本人（与后端规则一致） */

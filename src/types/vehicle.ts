@@ -1,5 +1,5 @@
 export interface Vehicle {
-  id?: number
+  id?: string
   plateNumber: string
   brand: string
   model: string

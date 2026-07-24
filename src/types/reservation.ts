@@ -1,12 +1,12 @@
 export interface Reservation {
-  id?: number
-  vehicleId: number
-  userId?: number
+  id?: string
+  vehicleId: string
+  userId?: string
   startTime: string
   endTime: string
   purpose: string
   status?: number
-  auditUserId?: number
+  auditUserId?: string
   auditTime?: string
   auditRemark?: string
   pickupTime?: string
@@ -29,8 +29,8 @@ export interface Reservation {
 }
 
 export interface VehicleScheduleItem {
-  id: number
-  vehicleId: number
+  id: string
+  vehicleId: string
   vehiclePlateNumber: string
   userName: string
   purpose: string
@@ -42,8 +42,8 @@ export interface VehicleScheduleItem {
 export interface ReservationQuery {
   page: number
   size: number
-  vehicleId?: number | null
-  userId?: number | null
+  vehicleId?: string | null
+  userId?: string | null
   status?: number | null
 }
 

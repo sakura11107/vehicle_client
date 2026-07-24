@@ -83,7 +83,7 @@ function handleSearchInput() {
   }, 300)
 }
 
-function goToChat(userId: number) {
+function goToChat(userId: string) {
   if (userId === userStore.currentUserId) {
     ElMessage.warning(t('contacts.cannotChatWithSelf'))
     return

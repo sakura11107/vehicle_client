@@ -3,11 +3,12 @@ import { ref } from 'vue'
 import * as messageApi from '../api/message'
 import type { ConversationResponse, MessageResponse } from '../types/message'
 import { connectWebSocket, disconnectWebSocket } from '../utils/websocket'
+import { useUserStore } from './user'
 
 export const useMessageStore = defineStore('message', () => {
   const conversations = ref<ConversationResponse[]>([])
   const unreadCount = ref(0)
-  const currentChatUserId = ref<number | null>(null)
+  const currentChatUserId = ref<string | null>(null)
   const currentChatUserName = ref<string>('')
   const chatMessages = ref<MessageResponse[]>([])
   const chatTotal = ref(0)
@@ -61,10 +62,10 @@ export const useMessageStore = defineStore('message', () => {
 
   async function fetchUnreadCount() {
     const res = await messageApi.getUnreadCount()
-    unreadCount.value = res.data
+    unreadCount.value = Number(res.data) || 0
   }
 
-  async function fetchChatHistory(userId: number, append = false) {
+  async function fetchChatHistory(userId: string, append = false) {
     if (!append) {
       chatPage.value = 1
       chatMessages.value = []
@@ -89,32 +90,43 @@ export const useMessageStore = defineStore('message', () => {
     }
   }
 
-  async function loadMoreHistory(userId: number) {
+  async function loadMoreHistory(userId: string) {
     if (chatMessages.value.length >= chatTotal.value) return
     chatPage.value++
     await fetchChatHistory(userId, true)
   }
 
-  async function send(userId: number, content: string) {
-    const res = await messageApi.sendMessage({ receiverId: userId, content })
-    const msg = res.data
-    chatMessages.value.push(msg)
+  async function send(userId: string, content: string) {
+    await messageApi.sendMessage({ receiverId: userId, content })
+    const now = new Date().toISOString()
+    const userStore = useUserStore()
+    const optimisticMsg: MessageResponse = {
+      id: String(Date.now()),
+      senderId: userStore.currentUserId!,
+      receiverId: userId,
+      content,
+      isRead: true,
+      createdTime: now,
+      senderName: userStore.userInfo?.username || '',
+      receiverName: currentChatUserName.value || '',
+    }
+    chatMessages.value.push(optimisticMsg)
     const conv = conversations.value.find((c) => c.userId === userId)
     if (conv) {
-      conv.lastMessage = msg.content
-      conv.lastMessageTime = msg.createdTime
+      conv.lastMessage = content
+      conv.lastMessageTime = now
     } else {
       conversations.value.unshift({
         userId,
-        userName: msg.receiverName,
-        lastMessage: msg.content,
-        lastMessageTime: msg.createdTime,
+        userName: currentChatUserName.value || `User ${userId}`,
+        lastMessage: content,
+        lastMessageTime: now,
         unreadCount: 0,
       })
     }
   }
 
-  async function markAsRead(userId: number) {
+  async function markAsRead(userId: string) {
     const conv = conversations.value.find((c) => c.userId === userId)
     const countToDecrement = conv ? conv.unreadCount : 0
     await messageApi.markAsRead(userId)
@@ -130,7 +142,7 @@ export const useMessageStore = defineStore('message', () => {
     conversations.value.forEach((c) => (c.unreadCount = 0))
   }
 
-  async function openChat(userId: number) {
+  async function openChat(userId: string) {
     currentChatUserId.value = userId
     try {
       await fetchChatHistory(userId)
@@ -162,7 +174,7 @@ export const useMessageStore = defineStore('message', () => {
     chatMessages.value = []
   }
 
-  function ensureConversation(userId: number, userName: string) {
+  function ensureConversation(userId: string, userName: string) {
     const exists = conversations.value.find((c) => c.userId === userId)
     if (!exists) {
       conversations.value.unshift({

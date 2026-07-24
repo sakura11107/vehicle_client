@@ -10,7 +10,7 @@ const { t, locale } = useI18n()
 const userManageStore = useUserManageStore()
 
 const showForm = ref(false)
-const editingId = ref<number | null>(null)
+const editingId = ref<string | null>(null)
 
 const searchForm = reactive({
   username: '',

@@ -10,7 +10,7 @@ export function getUnreadCount() {
   return request.get('/messages/unread-count') as Promise<ApiResponse<number>>
 }
 
-export function getChatHistory(userId: number, page = 1, size = 10) {
+export function getChatHistory(userId: string, page = 1, size = 10) {
   return request.get(`/messages/${userId}`, { params: { page, size } }) as Promise<ApiResponse<PageResponse<MessageResponse>>>
 }
 
@@ -18,7 +18,7 @@ export function sendMessage(data: MessageCreateRequest) {
   return request.post('/messages', data) as Promise<ApiResponse<MessageResponse>>
 }
 
-export function markAsRead(userId: number) {
+export function markAsRead(userId: string) {
   return request.put(`/messages/${userId}/read`) as Promise<ApiResponse<void>>
 }
 

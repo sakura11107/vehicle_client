@@ -3,10 +3,11 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useReservationStore } from '../../../stores/reservation'
 import type { Reservation } from '../../../types/reservation'
+import { ElMessage } from 'element-plus'
 
 const props = defineProps<{
   visible: boolean
-  reservationId: number | null
+  reservationId: string | null
 }>()
 
 const emit = defineEmits<{
@@ -23,7 +24,6 @@ function getStatusLabel(status: number | undefined) {
     0: t('reservation.statusMap.0'),
     1: t('reservation.statusMap.1'),
     2: t('reservation.statusMap.2'),
-    3: t('reservation.statusMap.3'),
     4: t('reservation.statusMap.4'),
     5: t('reservation.statusMap.5'),
   }
@@ -35,7 +35,6 @@ function getStatusType(status: number | undefined) {
     0: 'warning',
     1: 'primary',
     2: 'info',
-    3: 'success',
     4: '',
     5: 'danger',
   }
@@ -47,6 +46,11 @@ async function loadDetail() {
   loading.value = true
   try {
     detail.value = await reservationStore.getById(props.reservationId)
+  } catch (error: any) {
+    if (error?.response?.status === 403) {
+      ElMessage.error(t('errors.FORBIDDEN'))
+      handleClose()
+    }
   } finally {
     loading.value = false
   }

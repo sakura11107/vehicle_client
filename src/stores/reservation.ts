@@ -27,12 +27,12 @@ export const useReservationStore = defineStore('reservation', () => {
     }
   }
 
-  async function fetchGanttData(): Promise<VehicleScheduleItem[]> {
-    const res = await reservationApi.getSchedule()
+  async function fetchGanttData(from?: string, to?: string): Promise<VehicleScheduleItem[]> {
+    const res = await reservationApi.getSchedule(null, from, to)
     return res.data
   }
 
-  async function getById(id: number) {
+  async function getById(id: string) {
     const res = await reservationApi.getReservationById(id)
     return res.data
   }
@@ -42,21 +42,21 @@ export const useReservationStore = defineStore('reservation', () => {
     return res.data
   }
 
-  async function update(id: number, data: Reservation) {
+  async function update(id: string, data: Reservation) {
     const res = await reservationApi.updateReservation(id, data)
     return res.data
   }
 
-  async function cancel(id: number) {
+  async function cancel(id: string) {
     await reservationApi.cancelReservation(id)
   }
 
-  async function audit(id: number, data: AuditRequest) {
+  async function audit(id: string, data: AuditRequest) {
     const res = await reservationApi.auditReservation(id, data)
     return res.data
   }
 
-  async function returnCar(id: number, data: ReturnRequest) {
+  async function returnCar(id: string, data: ReturnRequest) {
     const res = await reservationApi.returnVehicle(id, data)
     return res.data
   }

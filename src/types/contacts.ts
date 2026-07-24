@@ -6,7 +6,7 @@ export interface ContactGroup {
 }
 
 export interface ContactUser {
-  id: number
+  id: string
   username: string
   role: number
   roleName: string

@@ -42,7 +42,7 @@ function goToMessage() {
   router.push('/message')
 }
 
-function goToConversation(userId: number) {
+function goToConversation(userId: string) {
   messageStore.currentChatUserId = userId
   router.push('/message')
 }
@@ -101,7 +101,7 @@ onMounted(() => {
       </template>
     </el-dropdown>
     <el-dropdown trigger="click" @visible-change="handleOpenDropdown">
-      <el-badge :value="messageStore.unreadCount" :hidden="messageStore.unreadCount === 0" :max="99">
+      <el-badge :value="messageStore.unreadCount" :hidden="messageStore.unreadCount <= 0" :max="99">
         <el-icon class="message-btn"><MessageIcon /></el-icon>
       </el-badge>
       <template #dropdown>

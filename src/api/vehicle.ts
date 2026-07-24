@@ -16,7 +16,7 @@ export function getVehicleList(params: VehicleQuery) {
   return request.get('/vehicles', { params: query }) as Promise<ApiResponse<PageResult<Vehicle>>>
 }
 
-export function getVehicleById(id: number) {
+export function getVehicleById(id: string) {
   return request.get(`/vehicles/${id}`) as Promise<ApiResponse<Vehicle>>
 }
 
@@ -24,10 +24,10 @@ export function createVehicle(data: Vehicle) {
   return request.post('/vehicles', data) as Promise<ApiResponse<Vehicle>>
 }
 
-export function updateVehicle(id: number, data: Vehicle) {
+export function updateVehicle(id: string, data: Vehicle) {
   return request.put(`/vehicles/${id}`, data) as Promise<ApiResponse<Vehicle>>
 }
 
-export function deleteVehicle(id: number) {
+export function deleteVehicle(id: string) {
   return request.delete(`/vehicles/${id}`) as Promise<ApiResponse<void>>
 }

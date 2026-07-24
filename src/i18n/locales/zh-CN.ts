@@ -81,10 +81,9 @@ export default {
     modelRequired: '请输入型号',
     statusRequired: '请选择状态',
     statusMap: {
-      0: '停用',
-      1: '空闲',
-      2: '使用中',
-      3: '维修中',
+      1: '空闲中',
+      2: '已预约',
+      3: '维保中',
     },
     placeholder: {
       plateNumber: '请输入车牌号',
@@ -178,9 +177,8 @@ export default {
     timeConflict: '所选时间段与已有预约冲突',
     statusMap: {
       0: '申请中',
-      1: '已审核',
+      1: '已通过',
       2: '已取消',
-      3: '使用中',
       4: '已还车',
       5: '已拒绝',
     },

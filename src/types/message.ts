@@ -1,7 +1,7 @@
 export interface MessageResponse {
-  id: number
-  senderId: number
-  receiverId: number
+  id: string
+  senderId: string
+  receiverId: string
   content: string
   isRead: boolean
   createdTime: string
@@ -10,7 +10,7 @@ export interface MessageResponse {
 }
 
 export interface ConversationResponse {
-  userId: number
+  userId: string
   userName: string
   lastMessage: string
   lastMessageTime: string
@@ -18,7 +18,7 @@ export interface ConversationResponse {
 }
 
 export interface MessageCreateRequest {
-  receiverId: number
+  receiverId: string
   content: string
 }
 

@@ -32,7 +32,7 @@ onMounted(async () => {
   }
 })
 
-const myUserId = computed(() => userStore.userInfo?.id ?? 0)
+const myUserId = computed(() => String(userStore.userInfo?.id ?? ''))
 
 const currentUserName = computed(() => {
   const conv = messageStore.conversations.find((c) => c.userId === messageStore.currentChatUserId)
@@ -66,7 +66,7 @@ function formatMessageTime(dateStr: string) {
   return `${month}月${day}日 ${hours}:${minutes}`
 }
 
-async function handleSelectConv(userId: number) {
+async function handleSelectConv(userId: string) {
   noMoreHistory.value = false
   await messageStore.openChat(userId)
   noMoreHistory.value = messageStore.chatMessages.length >= messageStore.chatTotal
@@ -201,9 +201,9 @@ watch(() => messageStore.chatMessages.length, () => {
               v-for="msg in messageStore.chatMessages"
               :key="msg.id"
               class="chat-bubble"
-              :class="{ mine: msg.senderId === myUserId }"
+              :class="{ mine: String(msg.senderId) === myUserId }"
             >
-              <div class="bubble-name">{{ msg.senderId === myUserId ? userStore.userInfo?.username : msg.senderName }}</div>
+              <div class="bubble-name">{{ String(msg.senderId) === myUserId ? userStore.userInfo?.username : msg.senderName }}</div>
               <div class="bubble-content">{{ msg.content }}</div>
               <div class="bubble-time">{{ formatMessageTime(msg.createdTime) }}</div>
             </div>
