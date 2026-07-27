@@ -31,3 +31,19 @@ export function updateVehicle(id: string, data: Vehicle) {
 export function deleteVehicle(id: string) {
   return request.delete(`/vehicles/${id}`) as Promise<ApiResponse<void>>
 }
+
+export function importVehicles(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post('/vehicles/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }) as Promise<ApiResponse<number>>
+}
+
+export function downloadImportTemplate() {
+  return request.get('/vehicles/import/template', {
+    responseType: 'blob',
+  }) as Promise<Blob>
+}

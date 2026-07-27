@@ -5,7 +5,9 @@ import { useVehicleStore } from '../../stores/vehicle'
 import { useUserStore } from '../../stores/user'
 import type { Vehicle } from '../../types/vehicle'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Download, Upload } from '@element-plus/icons-vue'
 import VehicleForm from './components/VehicleForm.vue'
+import * as vehicleApi from '../../api/vehicle'
 
 const { t, locale } = useI18n()
 const vehicleStore = useVehicleStore()
@@ -13,6 +15,9 @@ const userStore = useUserStore()
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
+const showImport = ref(false)
+const importing = ref(false)
+const importFile = ref<File | null>(null)
 
 const searchForm = reactive({
   plateNumber: '',
@@ -103,6 +108,56 @@ function handleFormSuccess() {
   vehicleStore.fetchList()
 }
 
+function handleImport() {
+  importFile.value = null
+  showImport.value = true
+}
+
+function handleImportClose() {
+  showImport.value = false
+  importFile.value = null
+}
+
+function handleFileChange(file: any) {
+  importFile.value = file.raw
+}
+
+async function handleDownloadTemplate() {
+  try {
+    const blob = await vehicleApi.downloadImportTemplate()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = '车辆导入模板.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch {
+    ElMessage.error(t('vehicle.importFail'))
+  }
+}
+
+async function handleImportSubmit() {
+  if (!importFile.value) {
+    ElMessage.warning(t('vehicle.fileRequired'))
+    return
+  }
+
+  importing.value = true
+  try {
+    const res = await vehicleApi.importVehicles(importFile.value)
+    ElMessage.success(t('vehicle.importSuccess', { count: res.data }))
+    showImport.value = false
+    importFile.value = null
+    vehicleStore.fetchList()
+  } catch {
+    ElMessage.error(t('vehicle.importFail'))
+  } finally {
+    importing.value = false
+  }
+}
+
 vehicleStore.fetchList()
 </script>
 
@@ -143,7 +198,13 @@ vehicleStore.fetchList()
       <template #header>
         <div class="card-header">
           <span>{{ t('vehicle.title') }}</span>
-          <el-button v-if="userStore.isManagerOrAdmin" type="primary" @click="handleAdd">{{ t('vehicle.add') }}</el-button>
+          <div>
+            <el-button v-if="userStore.isManagerOrAdmin" type="success" @click="handleImport">
+              <el-icon class="el-icon--left"><Upload /></el-icon>
+              {{ t('vehicle.import') }}
+            </el-button>
+            <el-button v-if="userStore.isManagerOrAdmin" type="primary" @click="handleAdd">{{ t('vehicle.add') }}</el-button>
+          </div>
         </div>
       </template>
 
@@ -194,6 +255,48 @@ vehicleStore.fetchList()
       @close="handleFormClose"
       @success="handleFormSuccess"
     />
+
+    <el-dialog
+      v-model="showImport"
+      :title="t('vehicle.import')"
+      width="500px"
+      @close="handleImportClose"
+    >
+      <div style="margin-bottom: 16px;">
+        <el-alert type="info" :closable="false">
+          <template #title>
+            <span>{{ t('vehicle.templateHint') }}</span>
+          </template>
+        </el-alert>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <el-button type="primary" link @click="handleDownloadTemplate">
+          <el-icon class="el-icon--left"><Download /></el-icon>
+          {{ t('vehicle.importTemplate') }}
+        </el-button>
+      </div>
+
+      <el-upload
+        ref="uploadRef"
+        :auto-upload="false"
+        :limit="1"
+        accept=".xlsx,.xls"
+        :on-change="handleFileChange"
+        :on-exceed="() => ElMessage.warning(t('vehicle.fileRequired'))"
+        drag
+      >
+        <el-icon style="font-size: 48px; color: #909399;"><Upload /></el-icon>
+        <div style="margin-top: 8px; color: #606266;">{{ t('vehicle.dragOrClick') }}</div>
+      </el-upload>
+
+      <template #footer>
+        <el-button @click="handleImportClose">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="importing" @click="handleImportSubmit">
+          {{ importing ? t('vehicle.uploading') : t('common.confirm') }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -212,6 +315,10 @@ vehicleStore.fetchList()
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.card-header > div {
+  display: flex;
+  gap: 8px;
 }
 .pagination-wrapper {
   display: flex;
