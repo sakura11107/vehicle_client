@@ -16,10 +16,12 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            sudo bash -c '
             cd /root/vehicle_client
             git pull origin feature_test
-            pnpm install
-            pnpm build
-            sudo rm -rf /var/www/vehicle/*
-            sudo cp -r dist/* /var/www/vehicle/
-            sudo systemctl reload nginx
+            /root/.nvm/versions/node/v22.14.0/bin/pnpm install
+            /root/.nvm/versions/node/v22.14.0/bin/pnpm build
+            rm -rf /var/www/vehicle/*
+            cp -r dist/* /var/www/vehicle/
+            systemctl reload nginx
+            '
