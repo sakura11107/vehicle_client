@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'feature_test', url: 'https://github.com/sakura11107/vehicle_client.git'
+                git branch: 'feature_test', url: 'git@github.com:sakura11107/vehicle_client.git'
             }
         }
         
