@@ -29,7 +29,6 @@ pipeline {
                 sh 'mkdir -p /var/www/vehicle'
                 sh 'rm -rf /var/www/vehicle/*'
                 sh 'cp -r dist/* /var/www/vehicle/'
-                sh 'systemctl reload nginx'
             }
         }
     }
