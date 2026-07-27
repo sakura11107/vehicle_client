@@ -1,0 +1,24 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [feature_test]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /root/vehicle_client
+            git pull origin feature_test
+            pnpm install
+            pnpm build
+            sudo rm -rf /var/www/vehicle/*
+            sudo cp -r dist/* /var/www/vehicle/
+            sudo systemctl reload nginx
