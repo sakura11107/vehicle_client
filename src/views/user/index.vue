@@ -160,10 +160,10 @@ userManageStore.fetchList()
 
       <div class="pagination-wrapper">
         <el-pagination
-          v-model:current-page="userManageStore.query.page"
-          v-model:page-size="userManageStore.query.size"
+          :current-page="userManageStore.query.page"
+          :page-size="userManageStore.query.size"
           :page-sizes="[10, 20, 50, 100]"
-          :total="userManageStore.total"
+          :total="Number(userManageStore.total || 0)"
           layout="total, sizes, prev, pager, next, jumper"
           @current-change="userManageStore.handlePageChange"
           @size-change="userManageStore.handleSizeChange"

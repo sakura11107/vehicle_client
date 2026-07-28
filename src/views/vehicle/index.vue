@@ -238,10 +238,10 @@ vehicleStore.fetchList()
 
       <div class="pagination-wrapper">
         <el-pagination
-          v-model:current-page="vehicleStore.query.page"
-          v-model:page-size="vehicleStore.query.size"
+          :current-page="vehicleStore.query.page"
+          :page-size="vehicleStore.query.size"
           :page-sizes="[10, 20, 50, 100]"
-          :total="vehicleStore.total"
+          :total="Number(vehicleStore.total || 0)"
           layout="total, sizes, prev, pager, next, jumper"
           @current-change="vehicleStore.handlePageChange"
           @size-change="vehicleStore.handleSizeChange"

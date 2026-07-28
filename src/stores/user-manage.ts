@@ -19,8 +19,11 @@ export const useUserManageStore = defineStore('userManage', () => {
     loading.value = true
     try {
       const res = await userApi.getUserList(query)
-      userList.value = res.data.records
-      total.value = res.data.total
+      const payload = res.data ?? {}
+      userList.value = Array.isArray(payload.records) ? payload.records : []
+      total.value = Number(payload.total ?? 0)
+      query.page = Number(payload.page ?? query.page ?? 1)
+      query.size = Number(payload.size ?? query.size ?? 10)
     } finally {
       loading.value = false
     }
@@ -53,12 +56,12 @@ export const useUserManageStore = defineStore('userManage', () => {
   }
 
   function handlePageChange(page: number) {
-    query.page = page
+    query.page = Number(page) || 1
     fetchList()
   }
 
   function handleSizeChange(size: number) {
-    query.size = size
+    query.size = Number(size) || 10
     query.page = 1
     fetchList()
   }

@@ -252,10 +252,10 @@ reservationStore.fetchList()
 
       <div class="pagination-wrapper">
         <el-pagination
-          v-model:current-page="reservationStore.query.page"
-          v-model:page-size="reservationStore.query.size"
+          :current-page="reservationStore.query.page"
+          :page-size="reservationStore.query.size"
           :page-sizes="[10, 20, 50, 100]"
-          :total="reservationStore.total"
+          :total="Number(reservationStore.total || 0)"
           layout="total, sizes, prev, pager, next, jumper"
           @current-change="reservationStore.handlePageChange"
           @size-change="reservationStore.handleSizeChange"
