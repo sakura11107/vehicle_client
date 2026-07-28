@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '../../stores/user'
 import { useMessageStore } from '../../stores/message'
 import { Fold, Expand, ArrowDown, Message as MessageIcon } from '@element-plus/icons-vue'
+import ProfileDrawer from './ProfileDrawer.vue'
 
 const props = defineProps<{
   isCollapse: boolean
@@ -18,6 +19,8 @@ const router = useRouter()
 const { t, locale } = useI18n()
 const userStore = useUserStore()
 const messageStore = useMessageStore()
+
+const showProfile = ref(false)
 
 const MAX_DISPLAY_COUNT = 5
 
@@ -144,13 +147,14 @@ onMounted(() => {
       </span>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item>{{ t('layout.profile') }}</el-dropdown-item>
+          <el-dropdown-item @click="showProfile = true">{{ t('layout.profile') }}</el-dropdown-item>
           <el-dropdown-item divided @click="handleLogout">
             {{ t('layout.logout') }}
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>
     </el-dropdown>
+    <ProfileDrawer v-model:visible="showProfile" />
   </div>
 </template>
 
