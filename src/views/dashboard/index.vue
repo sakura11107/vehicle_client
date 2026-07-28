@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useVehicleStore } from '../../stores/vehicle'
 import { useReservationStore } from '../../stores/reservation'
+import { getVehicleList } from '../../api/vehicle'
 import type { Vehicle } from '../../types/vehicle'
 import type { VehicleScheduleItem } from '../../types/reservation'
 import * as echarts from 'echarts'
@@ -10,7 +10,6 @@ import ReservationForm from './components/ReservationForm.vue'
 import ReservationDetail from './components/ReservationDetail.vue'
 
 const { t } = useI18n()
-const vehicleStore = useVehicleStore()
 const reservationStore = useReservationStore()
 
 const chartRef = ref<HTMLDivElement>()
@@ -19,6 +18,8 @@ const showForm = ref(false)
 const showDetail = ref(false)
 const detailId = ref<string | null>(null)
 const hasData = ref(false)
+const unreservedVehicles = ref<Vehicle[]>([])
+const quickReserveVehicle = ref<Vehicle | null>(null)
 
 let chart: echarts.ECharts | null = null
 
@@ -44,8 +45,8 @@ async function loadData() {
     statusLabelMap[0] = t('reservation.statusMap.0')
     statusLabelMap[1] = t('reservation.statusMap.1')
 
-    await vehicleStore.fetchList({ page: 1, size: 100 })
-    const allVehicles = vehicleStore.vehicleList
+    const vehicleRes = await getVehicleList({ page: 1, size: 100, plateNumber: '', brand: '', model: '', color: '', status: null })
+    const allVehicles = vehicleRes.data.records
 
     const now = new Date()
     const from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -57,7 +58,11 @@ async function loadData() {
     const vehicleMap = new Map<string, Vehicle>()
     allVehicles.forEach((v) => vehicleMap.set(v.id!, v))
 
-    renderChart(allVehicles, reservations, vehicleMap)
+    const reservedVehicleIds = new Set(reservations.map((r) => r.vehicleId))
+    const reservedVehicles = allVehicles.filter((v) => reservedVehicleIds.has(v.id!))
+    unreservedVehicles.value = allVehicles.filter((v) => !reservedVehicleIds.has(v.id!))
+
+    renderChart(reservedVehicles, reservations, vehicleMap)
   } finally {
     loading.value = false
   }
@@ -399,7 +404,19 @@ function handleResize() {
 
 function handleFormSuccess() {
   showForm.value = false
+  quickReserveVehicle.value = null
   loadData()
+}
+
+function quickReserve(vehicle: Vehicle) {
+  quickReserveVehicle.value = vehicle
+  showForm.value = true
+}
+
+function handleFormClose(val: boolean) {
+  if (!val) {
+    quickReserveVehicle.value = null
+  }
 }
 
 onMounted(async () => {
@@ -448,12 +465,42 @@ onUnmounted(() => {
         </div>
         <div v-else ref="chartRef" class="gantt-chart" />
       </div>
-      <div class="placeholder-section">
-        <el-empty :description="t('dashboard.noData')" />
+      <div class="unreserved-section">
+        <div class="section-header">
+          <h3>{{ t('dashboard.unreservedVehicles') }}</h3>
+          <el-badge :value="unreservedVehicles.length" type="info" />
+        </div>
+        <div v-if="unreservedVehicles.length === 0 && !loading" class="all-reserved">
+          <el-empty :description="t('dashboard.allReserved')" />
+        </div>
+        <div v-else class="vehicle-grid">
+          <div v-for="vehicle in unreservedVehicles" :key="vehicle.id" class="vehicle-card">
+            <div class="card-header">
+              <span class="plate-number">{{ vehicle.plateNumber }}</span>
+              <el-tag :type="vehicle.status === 1 ? 'success' : 'warning'" size="small">
+                {{ vehicle.status === 1 ? t('dashboard.idle') : t('dashboard.maintenance') }}
+              </el-tag>
+            </div>
+            <div class="card-body">
+              <div class="info-row">
+                <span class="color-dot" :style="{ background: vehicle.color }"></span>
+                <span class="vehicle-info">{{ vehicle.brand }} {{ vehicle.model }}</span>
+              </div>
+              <div class="info-row">
+                <span class="color-text">{{ vehicle.color }}</span>
+              </div>
+            </div>
+            <div class="card-footer" v-if="vehicle.status === 1">
+              <el-button type="primary" size="small" plain @click="quickReserve(vehicle)">
+                {{ t('dashboard.reserveNow') }}
+              </el-button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <ReservationForm v-model:visible="showForm" @success="handleFormSuccess" />
+    <ReservationForm v-model:visible="showForm" :initial-vehicle-id="quickReserveVehicle?.id ?? null" @success="handleFormSuccess" @update:visible="handleFormClose" />
     <ReservationDetail v-model:visible="showDetail" :reservation-id="detailId" />
   </div>
 </template>
@@ -469,6 +516,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 .header-left h2 {
   margin: 0;
@@ -523,7 +571,7 @@ onUnmounted(() => {
   border: 1px solid #f3f4f6;
   min-height: 0;
 }
-.placeholder-section {
+.unreserved-section {
   flex: 1;
   background: #fff;
   border-radius: 16px;
@@ -531,18 +579,91 @@ onUnmounted(() => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
   border: 1px solid #f3f4f6;
   min-height: 0;
+  overflow-y: auto;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #111827;
+  font-weight: 600;
+}
+.all-reserved {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 120px;
 }
-.chart-hint {
-  position: absolute;
-  right: 24px;
-  top: 16px;
+.vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.vehicle-card {
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 16px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.vehicle-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #e5e7eb;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.plate-number {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+}
+.color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+.color-text {
   font-size: 12px;
   color: #9ca3af;
-  pointer-events: none;
-  z-index: 1;
+}
+.vehicle-info {
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-footer {
+  padding-top: 4px;
 }
 .gantt-chart {
   width: 100%;

@@ -11,6 +11,7 @@ import { ElMessage } from 'element-plus'
 
 const props = defineProps<{
   visible: boolean
+  initialVehicleId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -106,7 +107,11 @@ watch(
   (val) => {
     if (val) {
       resetForm()
-      loadVehicles()
+      loadVehicles().then(() => {
+        if (props.initialVehicleId) {
+          form.vehicleId = props.initialVehicleId
+        }
+      })
     }
   },
 )

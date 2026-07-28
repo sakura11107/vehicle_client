@@ -57,6 +57,11 @@ export default {
     welcome: 'Welcome to Vehicle Management System',
     description: 'Please select a module from the sidebar.',
     noData: 'No reservation records',
+    unreservedVehicles: 'Unreserved Vehicles',
+    allReserved: 'All vehicles are reserved',
+    reserveNow: 'Reserve Now',
+    idle: 'Idle',
+    maintenance: 'Maintenance',
   },
   vehicle: {
     title: 'Vehicle Management',

@@ -57,6 +57,11 @@ export default {
     welcome: '欢迎使用车辆管理系统',
     description: '请从左侧菜单选择功能模块。',
     noData: '暂无预约记录',
+    unreservedVehicles: '未预约车辆',
+    allReserved: '所有车辆均已预约',
+    reserveNow: '立即预约',
+    idle: '空闲中',
+    maintenance: '维保中',
   },
   vehicle: {
     title: '车辆管理',

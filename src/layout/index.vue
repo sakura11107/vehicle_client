@@ -78,6 +78,6 @@ onUnmounted(() => {
 .layout-content {
   background-color: #f5f7fa;
   padding: 20px;
-  overflow: hidden;
+  overflow: auto;
 }
 </style>
